@@ -111,29 +111,30 @@ export default function App() {
 
   return (
       <View style={styles.container}>
+        <CameraView style={styles.camera} facing={facing} ref={cameraRef} mode={'video'}
+                    enableTorch={torch} flash={FlashMode.auto}>
+        </CameraView>
         <View style={styles.heartRateContainerParent}>
-            <View style={styles.heartRateContainerTop}>
-                <Text style={styles.heartRateDisplay}>{heartRate}</Text>
-                <Text style={styles.heartRateDisplay}>{heartRate2}</Text>
-                <Text style={styles.heartRateDisplay}>{heartRate3}</Text>
-            </View>
+          <View style={styles.heartRateContainerTop}>
+            <Text style={styles.heartRateDisplay}>{heartRate}</Text>
+            {/*<Text style={styles.heartRateDisplay}>{heartRate2}</Text>*/}
+            {/*<Text style={styles.heartRateDisplay}>{heartRate3}</Text>*/}
+          </View>
           <View style={styles.heartRateContainerBottom}>
-                <Text style={styles.heartRateDisplay}>{heartRate4}</Text>
+            <Text style={styles.heartRateDisplay}>{heartRate4}</Text>
           </View>
         </View>
-        <CameraView style={styles.camera} facing={facing} ref={cameraRef} mode={'video'} enableTorch={torch} flash={FlashMode.auto}>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={toggleTorch}>
-              <Text style={styles.text}>Toggle Torch</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={recordVideo}>
-              <Text style={styles.text}>Record Video</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={stopRecordVideo}>
-              <Text style={styles.text}>Stop</Text>
-            </TouchableOpacity>
-          </View>
-        </CameraView>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={toggleTorch}>
+            <Text style={styles.text}>Torch</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={recordVideo}>
+            <Text style={styles.text}>Start</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={stopRecordVideo}>
+            <Text style={styles.text}>Stop</Text>
+          </TouchableOpacity>
+        </View>
       </View>
   );
 }
@@ -151,10 +152,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonContainer: {
-    flex: 1,
+    flex: .5,
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    margin: 64,
+    margin: 40,
   },
   button: {
     flex: 1,
