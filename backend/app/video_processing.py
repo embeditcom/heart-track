@@ -65,12 +65,12 @@ def calculate_heart_rate_peaks(signal, fps):
     
     intervals = np.diff(peaks) / fps
     avg_interval = np.mean(intervals)
+    print("Avg interval:", avg_interval)
     
     heart_rate = 60 / avg_interval
     
-    if 40 <= heart_rate <= 180:
-        return heart_rate
-    return None
+    return heart_rate
+
 
 def process_video(video_path):
     """Process video to extract heart rate and SpO2 measurements."""
