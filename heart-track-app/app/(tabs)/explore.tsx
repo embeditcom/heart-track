@@ -5,6 +5,8 @@ import * as FileSystem from 'expo-file-system';
 import {FlashMode} from "expo-camera/legacy";
 
 export default function App() {
+  let videoRecordingMaxRecorded = 2;
+
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState<boolean>(true);
   const [permission, requestPermission] = useCameraPermissions();
@@ -13,12 +15,10 @@ export default function App() {
   const [heartRate2, setHeartRate2] = useState(0);
   const [heartRate3, setHeartRate3] = useState(0);
   const [heartRate4, setHeartRate4] = useState(0);
-
-
-
   const [recording, setRecording] = useState();
+  const [measureId, setMeasureId] = useState('');
+  const [measureInProgress, setMeasureInProgress] = useState<boolean>(false);
 
-  console.log('torch', torch);
   if (!permission) {
     // Camera permissions are still loading.
     return <View />;
@@ -34,74 +34,63 @@ export default function App() {
     );
   }
 
-  const imgDir = FileSystem.documentDirectory + 'images/';
-
-  const ensureDirExists = async () => {
-    const dirInfo = await FileSystem.getInfoAsync(imgDir);
-    console.log("dirInfo")
-    console.log(dirInfo)
-    if (!dirInfo.exists) {
-      FileSystem.makeDirectoryAsync(imgDir, { intermediates: true });
-    }
-    console.log("Directory exists")
-  };
-
-  function saveVideo(uri: string) {
-    ensureDirExists();
-    const filename = 'video.mov';
-    const dest = imgDir + filename;
-    console.log("Saving video to: " + dest)
-    FileSystem.copyAsync({ from: uri, to: dest });
-    return dest
-  }
-
-  const recordVideo = async () => {
+  function onVideoRecorded(video) {
     try {
-      console.log("Recording video...")
-      const video = await cameraRef?.current?.recordAsync({"maxDuration": 5});
       console.log("Video recorded", video)
-  
       if (!video?.uri) {
         console.error("No video URI available");
         return;
       }
-  
-      const dest = await saveVideo(video.uri);
-      console.log("Video saved to:", dest);
-  
+
       console.log("Uploading video...");
-      const response = await FileSystem.uploadAsync('http://172.20.10.10:5000/upload', dest, {
+      // const response = await FileSystem.uploadAsync('http://172.20.10.10:5000/upload/' + measureId', dest, {
+      FileSystem.uploadAsync('http://172.20.10.10:5000/upload', video.uri, {
         httpMethod: 'POST',
         uploadType: FileSystem.FileSystemUploadType.MULTIPART,
         fieldName: 'video'
-      });
-  
-      console.log("Response:", response);
+      }).then((response) => {
+        console.log("Response:", response);
 
-      const result = JSON.parse(response.body);
-      console.log("Server response:", result);
-  
-      if (result.valid) {
-        console.log("Heart Rate (Video):", result.heart_rate_video);
-        console.log("Heart Rate (Video):", result.heart_rate_video_2);
-        console.log("Heart Rate (Video):", result.heart_rate_video_3);
-        console.log("Heart Rate (Audio):", result.heart_rate_audio);
-        console.log("SpO2:", result.spo2);
-        setHeartRate(Math.round(result.heart_rate_video))
-        setHeartRate2(Math.round(result.heart_rate_video_2))
-        setHeartRate3(Math.round(result.heart_rate_video_3))
-        setHeartRate4(Math.round(result.heart_rate_audio))
-      } else {
-        console.error("Invalid response from server");
-      }
-  
+        const result = JSON.parse(response.body);
+        console.log("Server response:", result);
+
+        if (result.valid) {
+          console.log("Heart Rate (Video):", result.heart_rate_video);
+          console.log("Heart Rate (Video):", result.heart_rate_video_2);
+          console.log("Heart Rate (Video):", result.heart_rate_video_3);
+          console.log("Heart Rate (Audio):", result.heart_rate_audio);
+          console.log("SpO2:", result.spo2);
+          setHeartRate(Math.round(result.heart_rate_video))
+          setHeartRate2(Math.round(result.heart_rate_video_2))
+          setHeartRate3(Math.round(result.heart_rate_video_3))
+          setHeartRate4(Math.round(result.heart_rate_audio))
+        } else {
+          console.error("Invalid response from server");
+        }
+
+        console.log("measureInProgress", measureInProgress)
+        if (measureInProgress) {
+          console.log("Restarting measuring")
+          cameraRef?.current?.recordAsync({"maxDuration": videoRecordingMaxRecorded}).then(onVideoRecorded)
+        }
+      })
     } catch (error) {
       console.error("Error during video recording/processing:", error);
     }
-  };
+  }
 
-  async function stopRecordVideo() {
-    console.log("Stop recording video...")
+  function startMeasuring() {
+    // set measureId based on the current time and date in format yyyy-mm-dd-hh-mm-ss
+    let s = new Date().getTime().toString();
+    setMeasureId(s);
+    setMeasureInProgress(true);
+    console.log("Start measuring, new id: " + s)
+    cameraRef?.current?.recordAsync({"maxDuration": videoRecordingMaxRecorded}).then(onVideoRecorded)
+  }
+
+  async function stopMeasuring() {
+    console.log("Stop measuring...")
+    setMeasureInProgress(false);
     cameraRef?.current?.stopRecording()
   }
 
@@ -128,10 +117,10 @@ export default function App() {
           <TouchableOpacity style={styles.button} onPress={toggleTorch}>
             <Text style={styles.text}>Torch</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={recordVideo}>
+          <TouchableOpacity style={styles.button} onPress={startMeasuring} disabled={measureInProgress}>
             <Text style={styles.text}>Start</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={stopRecordVideo}>
+          <TouchableOpacity style={styles.button} onPress={stopMeasuring} disabled={!measureInProgress}>
             <Text style={styles.text}>Stop</Text>
           </TouchableOpacity>
         </View>
