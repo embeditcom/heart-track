@@ -17,6 +17,7 @@ def upload_file():
     heart_rate_video, spo2 = process_video(video_path)
     heart_rate_audio = process_audio_from_video(video_path)
 
+    os.remove(video_path)
 
     return jsonify({
         'heart_rate_video': heart_rate_video,
@@ -24,3 +25,9 @@ def upload_file():
         'spo2': spo2,
         'valid': True
     })
+
+
+@app.route('/process_video', methods=['POST'])
+def process_video():
+    video = request.files.get('video')
+    return jsonify({'message': 'Video received.'})
