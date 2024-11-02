@@ -9,6 +9,12 @@ export default function App() {
   const [torch, setTorch] = useState<boolean>(true);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null)
+  const [heartRate, setHeartRate] = useState(0);
+  const [heartRate2, setHeartRate2] = useState(0);
+  const [heartRate3, setHeartRate3] = useState(0);
+  const [heartRate4, setHeartRate4] = useState(0);
+
+
 
   const [recording, setRecording] = useState();
 
@@ -52,7 +58,7 @@ export default function App() {
   const recordVideo = async () => {
     try {
       console.log("Recording video...")
-      const video = await cameraRef?.current?.recordAsync({"maxDuration": 2});
+      const video = await cameraRef?.current?.recordAsync({"maxDuration": 5});
       console.log("Video recorded", video)
   
       if (!video?.uri) {
@@ -64,7 +70,7 @@ export default function App() {
       console.log("Video saved to:", dest);
   
       console.log("Uploading video...");
-      const response = await FileSystem.uploadAsync('http://172.20.10.2:5000/upload', dest, {
+      const response = await FileSystem.uploadAsync('http://172.20.10.10:5000/upload', dest, {
         httpMethod: 'POST',
         uploadType: FileSystem.FileSystemUploadType.MULTIPART,
         fieldName: 'video'
@@ -77,8 +83,14 @@ export default function App() {
   
       if (result.valid) {
         console.log("Heart Rate (Video):", result.heart_rate_video);
+        console.log("Heart Rate (Video):", result.heart_rate_video_2);
+        console.log("Heart Rate (Video):", result.heart_rate_video_3);
         console.log("Heart Rate (Audio):", result.heart_rate_audio);
         console.log("SpO2:", result.spo2);
+        setHeartRate(Math.round(result.heart_rate_video))
+        setHeartRate2(Math.round(result.heart_rate_video_2))
+        setHeartRate3(Math.round(result.heart_rate_video_3))
+        setHeartRate4(Math.round(result.heart_rate_audio))
       } else {
         console.error("Invalid response from server");
       }
@@ -93,21 +105,24 @@ export default function App() {
     cameraRef?.current?.stopRecording()
   }
 
-  function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  }
-
   function toggleTorch() {
     setTorch(current => !current);
   }
 
   return (
       <View style={styles.container}>
+        <View style={styles.heartRateContainerParent}>
+            <View style={styles.heartRateContainerTop}>
+                <Text style={styles.heartRateDisplay}>{heartRate}</Text>
+                <Text style={styles.heartRateDisplay}>{heartRate2}</Text>
+                <Text style={styles.heartRateDisplay}>{heartRate3}</Text>
+            </View>
+          <View style={styles.heartRateContainerBottom}>
+                <Text style={styles.heartRateDisplay}>{heartRate4}</Text>
+          </View>
+        </View>
         <CameraView style={styles.camera} facing={facing} ref={cameraRef} mode={'video'} enableTorch={torch} flash={FlashMode.auto}>
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-              <Text style={styles.text}>Flip Camera</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={toggleTorch}>
               <Text style={styles.text}>Toggle Torch</Text>
             </TouchableOpacity>
@@ -149,6 +164,33 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: 'white'
   },
+  heartRateContainerParent: {
+    justifyContent: 'center',
+    flex: 1
+  },
+  heartRateContainerTop: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 20,
+    alignItems: "flex-end",
+    flex: 1
+  },
+  heartRateContainerBottom: {
+    justifyContent: 'center',
+    flex: 1
+  },
+  heartRateContainer: {
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    flex: 1,
+  },
+  heartRateDisplay: {
+    fontSize: 50,
+    fontWeight: 'bold',
+    color: 'white',
+    textAlign: 'center',
+  }
 });
