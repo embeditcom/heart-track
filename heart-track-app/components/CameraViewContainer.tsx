@@ -25,11 +25,13 @@ export function CameraViewContainer({measureId, measureInProgress, setMeasureId,
 
     // Ref to keep track of the latest measureInProgress value
     const measureInProgressRef = useRef(measureInProgress);
+    const measureIdRef = useRef(measureId);
 
     useEffect(() => {
         // Sync ref with measureInProgress whenever it changes
         measureInProgressRef.current = measureInProgress;
-    }, [measureInProgress]);
+        measureIdRef.current = measureId;
+    }, [measureInProgress, measureId]);
 
     if (!permission) {
         // Camera permissions are still loading.
@@ -57,7 +59,7 @@ export function CameraViewContainer({measureId, measureInProgress, setMeasureId,
             }
 
             console.log("Uploading video...");
-            FileSystem.uploadAsync('http://172.20.10.10:5000/upload/' + measureId, video.uri, {
+            FileSystem.uploadAsync('http://172.20.10.10:5000/upload/' + measureIdRef.current, video.uri, {
                 httpMethod: 'POST',
                 uploadType: FileSystem.FileSystemUploadType.MULTIPART,
                 fieldName: 'video',
@@ -106,9 +108,11 @@ export function CameraViewContainer({measureId, measureInProgress, setMeasureId,
     }
 
     async function stopMeasuring() {
-        console.log("Stop measuring: " + measureId)
+        console.log("Stop measuring: " + measureIdRef.current)
         setMeasureInProgress(false);
         cameraRef?.current?.stopRecording()
+        console.log("Calling finish_processing")
+        fetch(`http://172.20.10.10:5000/finish_processing/${measureIdRef.current}`, {method: 'POST'})
     }
 
     function toggleTorch() {
