@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import {useRef, useState} from 'react';
+import { useState, useRef } from 'react';
 import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import {FlashMode} from "expo-camera/legacy";
@@ -71,7 +71,7 @@ export default function App() {
       });
   
       console.log("Response:", response);
-      
+
       const result = JSON.parse(response.body);
       console.log("Server response:", result);
   

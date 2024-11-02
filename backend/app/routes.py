@@ -18,13 +18,21 @@ def upload_file():
     print("Saving video to:", video_path)
     video.save(video_path)
 
-    heart_rate_video, spo2 = process_video(video_path)
+    heart_rate_video, heart_rate_video_2, heart_rate_video_3, spo2 = process_video(video_path)
     heart_rate_audio = process_audio_from_video(video_path)
+
+    print("Heart rate video:", heart_rate_video)
+    print("Heart rate video 2:", heart_rate_video_2)
+    print("Heart rate video 3:", heart_rate_video_3)
+    print("Heart rate audio:", heart_rate_audio)
+    print("SpO2:", spo2)
 
     os.remove(video_path)
 
     return jsonify({
         'heart_rate_video': heart_rate_video,
+        'heart_rate_video_2': heart_rate_video_2,
+        'heart_rate_video_3': heart_rate_video_3,
         'heart_rate_audio': heart_rate_audio,
         'spo2': spo2,
         'valid': True
