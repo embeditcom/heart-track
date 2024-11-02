@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - FLASK_APP=app
+      - FLASK_DEBUG=1
+    networks:
+      - heart-track-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - backend
+    networks:
+      - heart-track-network
+
+networks:
+  heart-track-network:
+    driver: bridge

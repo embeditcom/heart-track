@@ -1,25 +1,14 @@
+from flask import Flask
+from flask_cors import CORS
+import logging
 import os
 
-from flask import Flask
-import logging
+app = Flask(__name__)
+CORS(app)  # Enable CORS
 
-from flask import Flask, Response, flash, jsonify, redirect, render_template, request
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # Max upload size: 50MB
 
-# logging.basicConfig(level=logging.INFO)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-def create_app():
-    # create and configure the app
-    app = Flask(__name__, instance_relative_config=True, template_folder="./templates")
-
-    @app.route("/", methods=["GET", "POST"])
-    def index():
-        return render_template("index.html")
-
-    @app.route("/upload-video", methods=["POST"])
-    def upload_video_file():
-        file = request.files.get("file")
-        # save the file to the uploads folder
-        file.save(os.path.join("video-uploads", file.filename))
-
-
-    return app
+from app import routes
