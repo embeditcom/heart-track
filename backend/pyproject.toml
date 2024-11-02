@@ -1,0 +1,9 @@
+[project]
+name = "heart-track-backend"
+version = "0.1"
+description = "Web application for Heart Track mobile app"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "flask>=3.0.3",
+]
