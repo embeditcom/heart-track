@@ -7,3 +7,5 @@ frontend/dist
 frontend/build
 frontend/public
 backend/uploads
+backend/app/__pycache__
+backend/app/.venv
