@@ -9,3 +9,6 @@ frontend/public
 backend/uploads
 backend/app/__pycache__
 backend/app/.venv
+/heart-track-app/node_modules
+/heart-track-app/ios
+/heart-track-app/android

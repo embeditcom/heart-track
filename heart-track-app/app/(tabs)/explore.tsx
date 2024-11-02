@@ -50,30 +50,47 @@ export default function App() {
   }
 
   const recordVideo = async () => {
-    console.log("Recording video...")
-    console.log("cameraRef: " + cameraRef)
-    console.log("cameraRef.current: " )
-    console.log(cameraRef.current)
-    console.log(cameraRef.current.enableTorch)
-    cameraRef.current.enableTorch = true
-    const video = await cameraRef.current.recordAsync({"maxDuration": 2});
-    console.log("Video recorded", video)
-
-    dest = saveVideo(video.uri)
-
-    console.log("Uploading video...")
-
-    FileSystem.uploadAsync('http://172.20.10.10:5000/upload-video', dest, {
-      httpMethod: 'POST',
-      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-      fieldName: 'file'
-    });
-
-  }
+    try {
+      console.log("Recording video...")
+      const video = await cameraRef?.current?.recordAsync({"maxDuration": 2});
+      console.log("Video recorded", video)
+  
+      if (!video?.uri) {
+        console.error("No video URI available");
+        return;
+      }
+  
+      const dest = await saveVideo(video.uri);
+      console.log("Video saved to:", dest);
+  
+      console.log("Uploading video...");
+      const response = await FileSystem.uploadAsync('http://172.20.10.2:5000/upload', dest, {
+        httpMethod: 'POST',
+        uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+        fieldName: 'video'
+      });
+  
+      console.log("Response:", response);
+      
+      const result = JSON.parse(response.body);
+      console.log("Server response:", result);
+  
+      if (result.valid) {
+        console.log("Heart Rate (Video):", result.heart_rate_video);
+        console.log("Heart Rate (Audio):", result.heart_rate_audio);
+        console.log("SpO2:", result.spo2);
+      } else {
+        console.error("Invalid response from server");
+      }
+  
+    } catch (error) {
+      console.error("Error during video recording/processing:", error);
+    }
+  };
 
   async function stopRecordVideo() {
     console.log("Stop recording video...")
-    cameraRef.current.stopRecording()
+    cameraRef?.current?.stopRecording()
   }
 
   function toggleCameraFacing() {

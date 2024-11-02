@@ -8,10 +8,14 @@ import os
 def upload_file():
     video = request.files.get('video')
 
+    print("Video received:", video)
+
     if not video:
         return jsonify({'error': 'Video file is required.'}), 400
 
     video_path = os.path.join(app.config['UPLOAD_FOLDER'], video.filename)
+
+    print("Saving video to:", video_path)
     video.save(video_path)
 
     heart_rate_video, spo2 = process_video(video_path)
@@ -27,7 +31,7 @@ def upload_file():
     })
 
 
-@app.route('/process_video', methods=['POST'])
-def process_video():
+@app.route('/finish_processing', methods=['POST'])
+def finish_processing():
     video = request.files.get('video')
     return jsonify({'message': 'Video received.'})
