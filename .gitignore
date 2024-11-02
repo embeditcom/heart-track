@@ -12,3 +12,8 @@ backend/app/.venv
 /heart-track-app/node_modules
 /heart-track-app/ios
 /heart-track-app/android
+/node_modules
+/ios
+/android
+/heart-track-app/.expo
+/heart-track-app/.vscode
