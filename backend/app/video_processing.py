@@ -27,6 +27,10 @@ def calculate_heart_rate_fft(signal, fps):
 
 def calculate_heart_rate_bandpass(signal, fps):
     """Calculate heart rate using bandpass filtering."""
+    # Check if signal is long enough
+    if len(signal) <= 15:  # minimum required length
+        return None
+        
     nyquist = fps / 2
     low, high = 0.5 / nyquist, 4 / nyquist
     b, a = butter(2, [low, high], btype='band')
@@ -93,8 +97,6 @@ def process_video(video_path):
     heart_rate_fft = calculate_heart_rate_fft(intensity_values, fps)
     heart_rate_bandpass = calculate_heart_rate_bandpass(intensity_values, fps)
     heart_rate_peaks = calculate_heart_rate_peaks(intensity_values, fps)
-
-
     spo2 = estimate_spo2(intensity_values, fps)
 
     return heart_rate_fft, heart_rate_bandpass, heart_rate_peaks, spo2
