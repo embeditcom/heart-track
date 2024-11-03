@@ -213,7 +213,7 @@ def get_videos():
                                 video_info['results'] = json.load(f)
                         
 
-                        elif file == 'heart_rate_comparison.png':
+                        elif file == 'signal_analysis.png':
                             with open(file_path, 'rb') as f:
                                 figure_bytes = f.read()
                                 video_info['figure'] = base64.b64encode(figure_bytes).decode('utf-8')
