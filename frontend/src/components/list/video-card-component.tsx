@@ -52,9 +52,6 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, formatFileSize, formatDate
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <p>Heart Rate (Video - FFT): {video.results.heart_rate_video?.toFixed(1) ?? 'N/A'} BPM</p>
                                     <p>Heart Rate (Video - Bandpass): {video.results.heart_rate_video_2?.toFixed(1) ?? 'N/A'} BPM</p>
-                                    <p>Heart Rate (Video - Peaks): {video.results.heart_rate_video_3?.toFixed(1) ?? 'N/A'} BPM</p>
-                                    <p>Heart Rate (Audio): {video.results.heart_rate_audio?.toFixed(1) ?? 'N/A'} BPM</p>
-                                    <p>SpO₂: {video.results.spo2.toFixed(1)}%</p>
                                 </div>
                             </div>
                         )}

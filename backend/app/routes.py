@@ -5,9 +5,10 @@ from app.audio_processing import process_audio_from_video
 import os
 import json
 import matplotlib
+import shutil
 
 from app.plots_processing import bandpass_filter, compute_dominant_frequency, process_video_cleaning
-matplotlib.use('Agg')  # Add this line before importing pyplot
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import datetime
 import base64
@@ -84,13 +85,15 @@ def upload_file(video_id):
 @app.route('/finish_processing/<video_id>', methods=['POST'])
 def finish_processing(video_id):
     print('finish_processing', video_id)
-    id_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(video_id))
-    video_files = []
+    # Setup directories
+    upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], str(video_id))
+    finished_folder = os.path.join('finished_videos', str(video_id))
+    os.makedirs(finished_folder, exist_ok=True)
     
-    print('folder id', id_folder)
-    for file in os.listdir(id_folder):
+    video_files = []
+    for file in os.listdir(upload_folder):
         if any(file.lower().endswith(ext) for ext in ['.mp4', '.mov', '.avi', '.mkv']):
-            video_files.append(os.path.join(id_folder, file))
+            video_files.append(os.path.join(upload_folder, file))
     
     if not video_files:
         return jsonify({'error': 'No video files found'}), 400
@@ -99,7 +102,7 @@ def finish_processing(video_id):
     
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     merged_filename = f"{timestamp}_{video_id}_merged.mp4"
-    merged_path = os.path.join(id_folder, merged_filename)
+    merged_path = os.path.join(finished_folder, merged_filename)
     
     if len(video_files) > 1:
         merged_video = None
@@ -125,19 +128,19 @@ def finish_processing(video_id):
             video_path = merged_path
     else:
         video_path = video_files[0]
-    
-    # Process video for heart rate measurements
+        new_path = os.path.join(finished_folder, merged_filename)
+        os.rename(video_path, new_path)
+        video_path = new_path
+
     heart_rate_video, heart_rate_video_2, heart_rate_video_3, spo2 = process_video(video_path)
     heart_rate_audio = process_audio_from_video(video_path)
     
-    # Generate signal analysis plot using process_video_cleaning
     s = process_video_cleaning(video_path)
     s_light_filter = bandpass_filter(s)
     freq = compute_dominant_frequency(s_light_filter)
     s_hard_filter = bandpass_filter(s, (freq-20)/60, (freq+20)/60)
     peaks = signal.find_peaks(s_hard_filter, distance=10)[0]
     
-    # Create signal analysis plot
     fig, ax1 = plt.subplots(figsize=(14, 6))
     ax1.plot(s-s.mean(), 'blue', label='original (shifted)')
     ax1.plot(s_light_filter, 'orange', label='light filtered')
@@ -146,22 +149,8 @@ def finish_processing(video_id):
     ax1.legend()
     ax1.set_title('Signal Analysis')
     
-    signal_plot_path = os.path.join(id_folder, 'signal_analysis.png')
+    signal_plot_path = os.path.join(finished_folder, 'signal_analysis.png')
     plt.savefig(signal_plot_path, bbox_inches='tight')
-    plt.close()
-    
-    # Create methods comparison plot
-    plt.figure(figsize=(12, 6))
-    methods = ['Video FFT', 'Video Bandpass', 'Video Peaks', 'Audio']
-    heart_rates = [heart_rate_video, heart_rate_video_2, heart_rate_video_3, heart_rate_audio]
-    
-    plt.bar(methods, heart_rates)
-    plt.title('Heart Rate Measurements Comparison')
-    plt.ylabel('BPM')
-    plt.xticks(rotation=45)
-    
-    comparison_plot_path = os.path.join(id_folder, 'heart_rate_comparison.png')
-    plt.savefig(comparison_plot_path, bbox_inches='tight')
     plt.close()
     
     results = {
@@ -176,22 +165,33 @@ def finish_processing(video_id):
         'valid': True
     }
     
-    json_path = os.path.join(id_folder, 'results.json')
+    json_path = os.path.join(finished_folder, 'results.json')
     with open(json_path, 'w') as f:
         json.dump(results, f, indent=4)
+    
+    if os.path.exists(upload_folder):
+        for file in os.listdir(upload_folder):
+            file_path = os.path.join(upload_folder, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Error cleaning up {file_path}: {e}")
+        os.rmdir(upload_folder)
     
     return jsonify(results)
 
 
 @app.route('/get_videos', methods=['GET'])
 def get_videos():
-    upload_folder = app.config['UPLOAD_FOLDER']
+    finished_folder = 'finished_videos'
     video_files = []
     
     try:
-        for dirname in os.listdir(upload_folder):
-            dir_path = os.path.join(upload_folder, dirname)
-            print(dirname)
+        for dirname in os.listdir(finished_folder):
+            dir_path = os.path.join(finished_folder, dirname)
             if os.path.isdir(dir_path):
                 video_info = {}
                 
@@ -207,25 +207,18 @@ def get_videos():
                                 'modified': stats.st_mtime,
                                 'folder': dirname
                             })
-                        
                         elif file == 'results.json':
                             with open(file_path, 'r') as f:
                                 video_info['results'] = json.load(f)
-                        
-
                         elif file == 'signal_analysis.png':
                             with open(file_path, 'rb') as f:
                                 figure_bytes = f.read()
                                 video_info['figure'] = base64.b64encode(figure_bytes).decode('utf-8')
-
-                        print(video_info)
                 
-                if video_info: 
+                if video_info:
                     video_files.append(video_info)
-                
-        video_files.sort(key=lambda x: x['modified'], reverse=True)
-        print(video_files)
         
+        video_files.sort(key=lambda x: x['modified'], reverse=True)
         return jsonify({
             'videos': video_files,
             'success': True

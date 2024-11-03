@@ -28,6 +28,29 @@ def process_audio(audio_path):
 
         y = y / np.max(np.abs(y))
 
+
+        signal_energy = np.mean(np.abs(y))
+        if signal_energy < 0.1:
+            print("Audio signal too weak")
+            return None
+
+        noise_floor = np.mean(np.abs(y[::100]))
+        snr = 20 * np.log10(signal_energy / noise_floor)
+        if snr < 15: 
+            print("Audio too noisy")
+            return None
+
+        spec = np.abs(librosa.stft(y))
+        freqs = librosa.fft_frequencies(sr=sr)
+        heart_rate_band = (0.8, 2.5)
+        valid_freq_mask = (freqs >= heart_rate_band[0]) & (freqs <= heart_rate_band[1])
+        heart_rate_energy = np.mean(spec[valid_freq_mask])
+        total_energy = np.mean(spec)
+        
+        if heart_rate_energy / total_energy < 0.1:
+            print("No clear heart rate signal in audio")
+            return None
+
         sos = signal.butter(4, [20, 150], btype='bandpass', fs=sr, output='sos')
         filtered = signal.sosfilt(sos, y)
 

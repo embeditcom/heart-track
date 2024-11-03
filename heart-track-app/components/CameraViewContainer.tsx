@@ -59,7 +59,7 @@ export function CameraViewContainer({measureId, measureInProgress, setMeasureId,
             }
 
             console.log("Uploading video...");
-            FileSystem.uploadAsync('http://172.20.10.10:5000/upload/' + measureIdRef.current, video.uri, {
+            FileSystem.uploadAsync('http://172.20.10.2:5000/upload/' + measureIdRef.current, video.uri, {
                 httpMethod: 'POST',
                 uploadType: FileSystem.FileSystemUploadType.MULTIPART,
                 fieldName: 'video',
@@ -112,7 +112,7 @@ export function CameraViewContainer({measureId, measureInProgress, setMeasureId,
         setMeasureInProgress(false);
         cameraRef?.current?.stopRecording()
         console.log("Calling finish_processing")
-        fetch(`http://172.20.10.10:5000/finish_processing/${measureIdRef.current}`, {method: 'POST'})
+        fetch(`http://172.20.10.2:5000/finish_processing/${measureIdRef.current}`, {method: 'POST'})
     }
 
     function toggleTorch() {
